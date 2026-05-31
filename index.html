@@ -140,9 +140,54 @@
   .cmsg{background:var(--accent-light);color:var(--accent-dark);border-radius:12px;padding:13px;font-size:14.5px;font-weight:600;text-align:center}
   .cardlite{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
   .cardlite h2{margin:0 0 3px}
+  /* Name gate */
+  .gate{position:fixed;inset:0;z-index:50;background:linear-gradient(150deg,var(--accent),var(--accent-dark));
+    display:flex;align-items:center;justify-content:center;padding:22px;overflow:auto}
+  .gatebox{width:100%;max-width:420px;background:var(--card);border-radius:20px;padding:24px 20px 22px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+  .gatetop{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .gatetop .brand{color:var(--accent);font-size:20px}
+  .gatetop .brand .dot{background:var(--accent)}
+  .gate .lang{background:var(--accent-light)}
+  .gate .lang button{color:var(--accent-dark)}
+  .gate .lang button.on{background:var(--accent);color:#fff}
+  .gatebox h1{font-size:22px;margin:2px 0 6px}
+  .gatebox p.sub{margin:0 0 16px}
+  .gateprivacy{font-size:12.5px;color:var(--muted);background:var(--accent-light);border-radius:10px;
+    padding:10px 12px;margin:14px 0 0;line-height:1.45}
+  /* Feedback tab */
+  .rate{display:flex;gap:9px;margin-top:11px}
+  .rate button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:13px;padding:13px 0;
+    font-size:27px;cursor:pointer;font-family:inherit;transition:.12s}
+  .rate button:active{transform:scale(.97)}
+  .rate button.sel{border-color:var(--accent);background:var(--accent-light);transform:scale(1.04)}
+  .fbopts{display:flex;gap:8px;margin-top:11px}
+  .fbopts .yn{flex:1}
+  textarea.inp{min-height:88px;resize:vertical;line-height:1.45}
 </style>
 </head>
 <body>
+
+<!-- NAME GATE (shown first, once) -->
+<div id="gate" class="gate hide">
+  <div class="gatebox">
+    <div class="gatetop">
+      <div class="brand"><span class="dot"></span><span>Sahaay</span></div>
+      <div class="lang" id="gateLang">
+        <button data-l="en">EN</button>
+        <button data-l="hi">हिं</button>
+        <button data-l="mr">मरा</button>
+      </div>
+    </div>
+    <h1 id="gateTitle"></h1>
+    <p class="sub" id="gateSub"></p>
+    <input class="inp" id="gname" type="text" autocomplete="name">
+    <input class="inp" id="gphone" type="tel" inputmode="tel" autocomplete="tel">
+    <div id="gerr" style="color:var(--warn);font-size:13.5px;margin:-4px 0 10px;display:none"></div>
+    <button class="btn" id="gstart"></button>
+    <p class="gateprivacy" id="gpriv"></p>
+  </div>
+</div>
+
 <div class="app">
   <div class="topbar">
     <div class="brand"><span class="dot"></span><span id="brandName">Sahaay</span></div>
@@ -161,11 +206,14 @@
   <div id="screen-results" class="screen hide"></div>
   <!-- CHECKLIST -->
   <div id="screen-checklist" class="screen hide"></div>
+  <!-- FEEDBACK -->
+  <div id="screen-feedback" class="screen hide"></div>
 
   <div class="nav" id="nav">
     <button data-go="home" class="on"><span class="ni">🏠</span><span class="nlabel" data-k="navHome">Home</span></button>
     <button data-go="results"><span class="ni">📋</span><span class="nlabel" data-k="navMine">My benefits</span></button>
     <button data-go="checklist"><span class="ni">✅</span><span class="nlabel" data-k="navList">Checklist</span></button>
+    <button data-go="feedback"><span class="ni">💬</span><span class="nlabel" data-k="navFeedback">Feedback</span></button>
   </div>
 </div>
 
@@ -210,6 +258,23 @@ const STR = {
     contactSubmit:"Send", contactThanks:"Thank you! We'll reach out to help you. 💚",
     needConsent:"Please tick the box so we know it's okay to contact you.",
     needPhone:"Please enter a phone number.",
+    gateTitle:"Welcome to Sahaay", navFeedback:"Feedback",
+    gateSub:"Let's start. Please tell us your name so we can guide you. Phone number is optional.",
+    gateName:"Your name", gatePhone:"Phone / WhatsApp (optional)",
+    gateStart:"Continue →", gateNeedName:"Please enter your name to continue.",
+    gatePrivacy:"🔒 Your details stay private and are used only to help you with your benefits. Sahaay is always free.",
+    fbHeading:"Your feedback",
+    fbLead:"Sahaay is built for you. Tell us how it felt — it takes under a minute and helps us reach more young people. Tap 🔊 to hear any question.",
+    fqRate:"How was your experience using Sahaay?",
+    fqHelp:"Did Sahaay help you understand what you can claim?",
+    fqRead:"Could you read and understand everything easily in this language?",
+    fqAudio:"Would a 🔊 read-aloud button on every screen help you?",
+    fqRecommend:"Would you tell a friend who left care about Sahaay?",
+    fqOpen:"Anything we should add or do better? (optional)",
+    somewhat:"Somewhat", fbSend:"Send feedback",
+    fbThanks:"Thank you for helping us make Sahaay better. 💚",
+    fbNeedRate:"Please tap one face to rate your experience.",
+    openPlaceholder:"Type here…",
   },
   hi:{
     brand:"सहाय", navHome:"होम", navMine:"मेरे लाभ", navList:"चेकलिस्ट",
@@ -249,6 +314,23 @@ const STR = {
     contactSubmit:"भेजें", contactThanks:"धन्यवाद! हम आपकी मदद के लिए संपर्क करेंगे। 💚",
     needConsent:"कृपया बॉक्स पर टिक करें ताकि हमें पता चले कि संपर्क करना ठीक है।",
     needPhone:"कृपया एक फ़ोन नंबर डालें।",
+    gateTitle:"सहाय में आपका स्वागत है", navFeedback:"फ़ीडबैक",
+    gateSub:"चलिए शुरू करें। कृपया अपना नाम बताएं ताकि हम आपका मार्गदर्शन कर सकें। फ़ोन नंबर देना वैकल्पिक है।",
+    gateName:"आपका नाम", gatePhone:"फ़ोन / व्हाट्सएप (वैकल्पिक)",
+    gateStart:"आगे बढ़ें →", gateNeedName:"आगे बढ़ने के लिए कृपया अपना नाम डालें।",
+    gatePrivacy:"🔒 आपकी जानकारी निजी रहती है और केवल आपकी मदद के लिए उपयोग होती है। सहाय हमेशा मुफ़्त है।",
+    fbHeading:"आपका फ़ीडबैक",
+    fbLead:"सहाय आपके लिए बना है। बताएं यह कैसा लगा — एक मिनट से कम लगेगा और इससे हम और युवाओं तक पहुँच पाते हैं। किसी भी सवाल को सुनने के लिए 🔊 दबाएं।",
+    fqRate:"सहाय का उपयोग करने का अनुभव कैसा रहा?",
+    fqHelp:"क्या सहाय ने यह समझने में मदद की कि आप क्या पा सकते हैं?",
+    fqRead:"क्या आप इस भाषा में सब कुछ आसानी से पढ़ व समझ पाए?",
+    fqAudio:"क्या हर स्क्रीन पर 🔊 पढ़कर सुनाने वाला बटन आपकी मदद करेगा?",
+    fqRecommend:"क्या आप केयर छोड़ चुके किसी दोस्त को सहाय के बारे में बताएंगे?",
+    fqOpen:"कुछ जो हमें जोड़ना या बेहतर करना चाहिए? (वैकल्पिक)",
+    somewhat:"कुछ-कुछ", fbSend:"फ़ीडबैक भेजें",
+    fbThanks:"सहाय को बेहतर बनाने में मदद के लिए धन्यवाद। 💚",
+    fbNeedRate:"कृपया अपना अनुभव बताने के लिए एक चेहरा चुनें।",
+    openPlaceholder:"यहाँ लिखें…",
   },
   mr:{
     brand:"सहाय", navHome:"होम", navMine:"माझे लाभ", navList:"चेकलिस्ट",
@@ -288,6 +370,23 @@ const STR = {
     contactSubmit:"पाठवा", contactThanks:"धन्यवाद! आम्ही तुम्हाला मदतीसाठी संपर्क करू. 💚",
     needConsent:"कृपया बॉक्सवर टिक करा जेणेकरून संपर्क करणे ठीक आहे हे आम्हाला कळेल.",
     needPhone:"कृपया फोन नंबर टाका.",
+    gateTitle:"सहाय मध्ये आपले स्वागत आहे", navFeedback:"अभिप्राय",
+    gateSub:"चला सुरू करूया. कृपया तुमचे नाव सांगा जेणेकरून आम्ही तुम्हाला मार्गदर्शन करू शकू. फोन नंबर देणे ऐच्छिक आहे.",
+    gateName:"तुमचे नाव", gatePhone:"फोन / व्हॉट्सॲप (ऐच्छिक)",
+    gateStart:"पुढे जा →", gateNeedName:"पुढे जाण्यासाठी कृपया तुमचे नाव टाका.",
+    gatePrivacy:"🔒 तुमची माहिती खाजगी राहते व फक्त तुमच्या मदतीसाठी वापरली जाते. सहाय नेहमी मोफत आहे.",
+    fbHeading:"तुमचा अभिप्राय",
+    fbLead:"सहाय तुमच्यासाठी बनवले आहे. ते कसे वाटले ते सांगा — एक मिनिटापेक्षा कमी वेळ लागेल आणि यामुळे आम्ही अधिक तरुणांपर्यंत पोहोचतो. कोणताही प्रश्न ऐकण्यासाठी 🔊 दाबा.",
+    fqRate:"सहाय वापरण्याचा अनुभव कसा होता?",
+    fqHelp:"तुम्ही काय मिळवू शकता हे समजण्यास सहायने मदत केली का?",
+    fqRead:"तुम्ही या भाषेत सर्व काही सहज वाचू व समजू शकलात का?",
+    fqAudio:"प्रत्येक स्क्रीनवर 🔊 वाचून दाखवणारे बटण तुम्हाला मदत करेल का?",
+    fqRecommend:"केअर सोडलेल्या एखाद्या मित्राला तुम्ही सहायबद्दल सांगाल का?",
+    fqOpen:"आम्ही काही जोडावे किंवा सुधारावे असे वाटते का? (ऐच्छिक)",
+    somewhat:"थोडेसे", fbSend:"अभिप्राय पाठवा",
+    fbThanks:"सहाय अधिक चांगले करण्यात मदत केल्याबद्दल धन्यवाद. 💚",
+    fbNeedRate:"कृपया तुमचा अनुभव सांगण्यासाठी एक चेहरा निवडा.",
+    openPlaceholder:"इथे लिहा…",
   }
 };
 
@@ -456,12 +555,13 @@ const BENEFITS = [
 /* ============================ STATE ============================ */
 let lang = load("sahaay_lang") || "en";
 let answers = load("sahaay_answers") || {age:null, where:null, needs:[]};
-if(!answers.fb) answers.fb = {read:null, audio:null};
 let checklist = load("sahaay_checklist") || {}; // id -> bool done, key format benefitId
+let user = load("sahaay_user") || null;   // {name, phone} once entered at the gate
 let openCards = {};
 let stepI = 0;
 let view = "home";
 let usageSent = false;
+let fb = {rate:null, help:null, read:null, audio:null, recommend:null, text:""}; // feedback tab
 
 function load(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
@@ -474,41 +574,68 @@ const FIELDS = { type:"entry.254617537", details:"entry.204328594", name:"entry.
 const sessionId = 's' + Date.now() + Math.random().toString(36).slice(2,7);
 
 // Device-native text-to-speech (free, no files, works offline once voices load)
-let curUtter = null;
+let curUtter = null, VOICES = [];
+function loadVoices(){ if('speechSynthesis' in window){ VOICES = window.speechSynthesis.getVoices() || []; } }
+if('speechSynthesis' in window){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+// Pick the best installed voice for a language. Marathi devices often have NO mr voice,
+// so we fall back to a Hindi voice (same Devanagari script — it reads Marathi intelligibly),
+// then any Indian-English voice, before giving up to the browser default.
+function pickVoice(l){
+  if(!VOICES.length) loadVoices();
+  const norm = v => (v.lang||'').toLowerCase().replace('_','-');
+  const wants = l==='hi' ? ['hi-in','hi'] : l==='mr' ? ['mr-in','mr'] : ['en-in','en-gb','en-us','en'];
+  for(const w of wants){
+    const exact = VOICES.find(v=>norm(v)===w);
+    if(exact) return exact;
+    const pre = VOICES.find(v=>norm(v).startsWith(w));
+    if(pre) return pre;
+  }
+  if(l==='mr'){                                   // Marathi → use any Hindi voice (Devanagari)
+    const hi = VOICES.find(v=>norm(v).startsWith('hi'));
+    if(hi) return hi;
+  }
+  return VOICES.find(v=>norm(v).includes('-in')) || null;
+}
 function speak(text, btn){
   if(!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
-  document.querySelectorAll('.spk.speaking').forEach(b=>b.classList.remove('speaking'));
+  document.querySelectorAll('.spk.speaking,.yn.speaking').forEach(b=>b.classList.remove('speaking'));
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang==='hi' ? 'hi-IN' : lang==='mr' ? 'mr-IN' : 'en-IN';
-  u.rate = 0.95;
+  const v = pickVoice(lang);
+  if(v){ u.voice = v; u.lang = v.lang; }
+  else { u.lang = lang==='hi' ? 'hi-IN' : lang==='mr' ? 'mr-IN' : 'en-IN'; }
+  u.rate = 0.92; u.pitch = 1;
   if(btn){ btn.classList.add('speaking');
     u.onend = ()=>btn.classList.remove('speaking');
     u.onerror = ()=>btn.classList.remove('speaking'); }
   curUtter = u;
-  window.speechSynthesis.speak(u);
+  // small delay avoids the Chrome "cancel then speak" race that silently drops speech
+  setTimeout(()=>{ try{ window.speechSynthesis.speak(u); }catch(e){} }, 60);
 }
 
 // Send a row to the Google Form (auto-collects to Responses / linked Sheet).
 function postData(type, extra){
   if(!FORM_ENDPOINT) return;
   extra = extra||{};
-  const details = [
+  const parts = [
     'lang='+lang,
     'age='+(answers.age||''),
     'where='+(answers.where||''),
     'needs='+((answers.needs||[]).join('+')),
     'benefits='+BENEFITS.filter(eligible).map(b=>b.id).join('+'),
-    'read='+answers.fb.read,
-    'audio='+answers.fb.audio,
     'ts='+new Date().toISOString(),
     'session='+sessionId
-  ].join(' | ');
+  ];
+  if(extra.extraDetails) parts.push(extra.extraDetails);
   const fd = new URLSearchParams();
   fd.append(FIELDS.type, type);
-  fd.append(FIELDS.details, details);
-  fd.append(FIELDS.name, extra.name||'');
-  fd.append(FIELDS.whatsapp, extra.whatsapp||'');
+  fd.append(FIELDS.details, parts.join(' | '));
+  // every row carries the name/phone captured at the gate, so usage can be followed up
+  fd.append(FIELDS.name, extra.name || (user&&user.name) || '');
+  fd.append(FIELDS.whatsapp, extra.whatsapp || (user&&user.phone) || '');
   try{
     fetch(FORM_ENDPOINT,{method:'POST',mode:'no-cors',
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
@@ -540,13 +667,14 @@ function render(){
   // brand + nav labels
   document.getElementById("brandName").textContent=s("brand");
   document.querySelectorAll(".nlabel").forEach(e=>e.textContent=s(e.dataset.k));
-  ["home","q","results","checklist"].forEach(v=>{
+  ["home","q","results","checklist","feedback"].forEach(v=>{
     document.getElementById("screen-"+v).classList.toggle("hide", v!==view);
   });
   if(view==="home") renderHome();
   if(view==="q") renderQ();
   if(view==="results") renderResults();
   if(view==="checklist") renderChecklist();
+  if(view==="feedback") renderFeedbackTab();
 }
 
 function renderHome(){
@@ -566,8 +694,8 @@ function renderHome(){
   el.querySelector("#startBtn").onclick=()=>go("q");
 }
 
-// Flow: age → where → feedback (thrown in between) → needs → results
-const STEPS = ["age","where","feedback","needs"];
+// Flow: age → where → needs → results  (feedback lives in its own bottom-nav tab)
+const STEPS = ["age","where","needs"];
 
 function esc(t){return String(t).replace(/"/g,"&quot;");}
 
@@ -580,8 +708,6 @@ function renderQ(){
     ${stepI>0?`<button class="backlink" id="bk">← ${s("back")}</button>`:''}
     <div class="progress"><i style="width:${pct}%"></i></div>
     <div class="qstep">${stepI+1} / ${total}</div>`;
-
-  if(kind==="feedback"){ renderFeedback(el,head); return; }
 
   // Question steps (age / where / needs)
   const cfg={
@@ -616,35 +742,59 @@ function renderQ(){
   if(el.querySelector("#nx")) el.querySelector("#nx").onclick=()=>go("results");
 }
 
-function renderFeedback(el, head){
-  const r=answers.fb.read, a=answers.fb.audio;
-  el.innerHTML=`${head}
-    <h1>${s("fbTitle")}</h1>
-    <p class="sub">${s("fbIntro")}</p>
+/* Dedicated Feedback tab (bottom nav). Emoji rating + a few quick taps + an open box.
+   Each question has its own 🔊 Listen button so low-literacy users can hear it. */
+function renderFeedbackTab(){
+  const el=document.getElementById("screen-feedback");
+  if(fb.sent){
+    el.innerHTML=`<h1>${s("fbHeading")}</h1>
+      <div class="cmsg" style="margin-top:8px">${s("fbThanks")}</div>`;
+    return;
+  }
+  const faces=[["1","😞"],["2","😕"],["3","🙂"],["4","😄"]];
+  const yn=(name,extra)=>{
+    const opts=[["yes",s("yes"),"👍"]].concat(extra?[["somewhat",s("somewhat"),"🤔"]]:[]).concat([["no",s("no"),"👎"]]);
+    return `<div class="fbopts">`+opts.map(o=>
+      `<button class="yn ${fb[name]===o[0]?'sel':''}" data-q="${name}" data-val="${o[0]}">${o[2]} ${o[1]}</button>`
+    ).join("")+`</div>`;
+  };
+  const card=(qKey,inner)=>`
     <div class="fbcard">
-      <div class="fbq"><span class="qn">1.</span><span>${s("fbQ1")}</span></div>
-      <button class="spk" data-spk="${esc(s("fbQ1"))}">🔊 ${s("listen")}</button>
-      <div class="ynrow">
-        <button class="yn ${r===true?'sel':''}" data-fb="read" data-val="1">👍 ${s("yes")}</button>
-        <button class="yn ${r===false?'sel':''}" data-fb="read" data-val="0">👎 ${s("no")}</button>
+      <div class="fbintro">
+        <div class="fbq"><span>${s(qKey)}</span></div>
+        <button class="spk mini" data-spk="${esc(s(qKey))}">🔊 ${s("listen")}</button>
       </div>
-    </div>
-    <div class="fbcard">
-      <div class="fbq"><span class="qn">2.</span><span>${s("fbQ2")}</span></div>
-      <button class="spk" data-spk="${esc(s("fbQ2"))}">🔊 ${s("listen")}</button>
-      <div class="ynrow">
-        <button class="yn ${a===true?'sel':''}" data-fb="audio" data-val="1">👍 ${s("yes")}</button>
-        <button class="yn ${a===false?'sel':''}" data-fb="audio" data-val="0">👎 ${s("no")}</button>
-      </div>
-    </div>
-    <button class="btn" id="fbnext">${s("fbContinue")} →</button>`;
-  el.querySelector("#bk").onclick=()=>{stepI--;renderQ();};
+      ${inner}
+    </div>`;
+  el.innerHTML=`
+    <h1>${s("fbHeading")}</h1>
+    <p class="sub">${s("fbLead")}</p>
+    ${card("fqRate", `<div class="rate">`+faces.map(f=>
+        `<button class="${fb.rate===f[0]?'sel':''}" data-rate="${f[0]}">${f[1]}</button>`).join("")+`</div>`)}
+    ${card("fqHelp", yn("help",true))}
+    ${card("fqRead", yn("read",false))}
+    ${card("fqAudio", yn("audio",false))}
+    ${card("fqRecommend", yn("recommend",false))}
+    ${card("fqOpen", `<textarea class="inp" id="fbtext" placeholder="${esc(s("openPlaceholder"))}" style="margin-top:11px;margin-bottom:0">${esc(fb.text||"")}</textarea>`)}
+    <div id="fberr" style="color:var(--warn);font-size:13.5px;margin:4px 0 10px;display:none"></div>
+    <button class="btn" id="fbsend">${s("fbSend")} →</button>
+    <div style="height:8px"></div>`;
   el.querySelectorAll(".spk").forEach(b=>b.onclick=()=>speak(b.dataset.spk,b));
-  el.querySelectorAll(".yn").forEach(b=>b.onclick=()=>{
-    answers.fb[b.dataset.fb]=(b.dataset.val==="1");
-    save("sahaay_answers",answers); renderFeedback(el,head);
-  });
-  el.querySelector("#fbnext").onclick=()=>{stepI++;renderQ();};
+  el.querySelectorAll("[data-rate]").forEach(b=>b.onclick=()=>{fb.rate=b.dataset.rate;renderFeedbackTab();});
+  el.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{
+    const q=b.dataset.q; fb[q]=(fb[q]===b.dataset.val)?null:b.dataset.val; renderFeedbackTab();});
+  const ta=el.querySelector("#fbtext");
+  if(ta) ta.oninput=()=>{fb.text=ta.value;};
+  el.querySelector("#fbsend").onclick=()=>{
+    if(ta) fb.text=ta.value.trim();
+    const err=el.querySelector("#fberr");
+    if(!fb.rate){err.textContent=s("fbNeedRate");err.style.display="block";return;}
+    const detail='rate='+fb.rate+' | help='+(fb.help||'')+' | read='+(fb.read||'')+
+                 ' | audio='+(fb.audio||'')+' | recommend='+(fb.recommend||'')+
+                 ' | text='+(fb.text||'').replace(/[\r\n|]+/g,' ');
+    postData('feedback',{extraDetails:detail});
+    fb.sent=true; if('speechSynthesis' in window) window.speechSynthesis.cancel(); renderFeedbackTab();
+  };
 }
 
 function renderResults(){
@@ -685,17 +835,6 @@ function renderResults(){
     <h1>${s("resTitle")}</h1>
     <div class="resulthead">${s("resSub")}</div>
     ${list.length?cards:`<div class="card"><div class="ch"><div class="ic">ℹ️</div><div class="ti"><p>${s("none")}</p></div></div></div>`}
-    <div class="cardlite" id="contactCard">
-      <h2>${s("contactTitle")}</h2>
-      <p class="sub" style="margin:0 0 13px">${s("contactSub")}</p>
-      <div id="cform">
-        <input class="inp" id="cname" type="text" placeholder="${esc(s("nameLabel"))}">
-        <input class="inp" id="cphone" type="tel" inputmode="tel" placeholder="${esc(s("phoneLabel"))}">
-        <label class="consent"><input type="checkbox" id="cconsent"><span>${s("consentLabel")}</span></label>
-        <button class="btn" id="csend">${s("contactSubmit")}</button>
-        <div id="cerr" style="color:var(--warn);font-size:13.5px;margin-top:9px;display:none"></div>
-      </div>
-    </div>
     <div class="disclaimer">${s("glossDCPU")}</div>
     <div style="height:8px"></div>
     <button class="btn ghost" id="restart">↺ ${s("restart")}</button>`;
@@ -705,19 +844,8 @@ function renderResults(){
     const id=btn.dataset.add;
     if(checklist[id]===undefined){checklist[id]=false;} // add unchecked
     save("sahaay_checklist",checklist); renderResults();});
-  const send=el.querySelector("#csend");
-  if(send) send.onclick=()=>{
-    const name=el.querySelector("#cname").value.trim();
-    const phone=el.querySelector("#cphone").value.trim();
-    const consent=el.querySelector("#cconsent").checked;
-    const err=el.querySelector("#cerr");
-    if(!consent){err.textContent=s("needConsent");err.style.display="block";return;}
-    if(!phone){err.textContent=s("needPhone");err.style.display="block";return;}
-    postData('contact',{name:name, whatsapp:phone, consent:true});
-    el.querySelector("#cform").innerHTML=`<div class="cmsg">${s("contactThanks")}</div>`;
-  };
   el.querySelector("#restart").onclick=()=>{
-    answers={age:null,where:null,needs:[],fb:{read:null,audio:null}};
+    answers={age:null,where:null,needs:[]};
     save("sahaay_answers",answers);openCards={};usageSent=false;go("q");};
 }
 
@@ -742,12 +870,46 @@ function renderChecklist(){
   el.querySelectorAll("[data-ck]").forEach(it=>it.onclick=()=>{const id=it.dataset.ck;checklist[id]=!checklist[id];save("sahaay_checklist",checklist);renderChecklist();});
 }
 
+/* ============================ NAME GATE ============================ */
+// The app stays hidden behind a one-time gate. Name is required; phone optional.
+// Once entered it's saved to this phone, so returning users skip straight in.
+function paintGate(){
+  document.getElementById("gateTitle").textContent=s("gateTitle");
+  document.getElementById("gateSub").textContent=s("gateSub");
+  document.getElementById("gname").placeholder=s("gateName");
+  document.getElementById("gphone").placeholder=s("gatePhone");
+  document.getElementById("gstart").textContent=s("gateStart");
+  document.getElementById("gpriv").textContent=s("gatePrivacy");
+  document.querySelectorAll("#gateLang button").forEach(b=>b.classList.toggle("on",b.dataset.l===lang));
+}
+function showGate(){
+  document.getElementById("gate").classList.remove("hide");
+  paintGate();
+}
+function finishGate(){
+  const name=document.getElementById("gname").value.trim();
+  const phone=document.getElementById("gphone").value.trim();
+  const err=document.getElementById("gerr");
+  if(!name){err.textContent=s("gateNeedName");err.style.display="block";
+    document.getElementById("gname").focus();return;}
+  err.style.display="none";
+  user={name:name, phone:phone};
+  save("sahaay_user",user);
+  postData('signup');                       // logs the new visitor with their name/phone
+  document.getElementById("gate").classList.add("hide");
+  render();
+}
+document.querySelectorAll("#gateLang button").forEach(b=>b.onclick=()=>{setLang(b.dataset.l);paintGate();});
+document.getElementById("gstart").onclick=finishGate;
+document.getElementById("gphone").addEventListener("keydown",e=>{if(e.key==="Enter")finishGate();});
+
 /* ============================ INIT ============================ */
 document.querySelectorAll("#langSwitch button").forEach(b=>b.onclick=()=>setLang(b.dataset.l));
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.go==="home"?"home":b.dataset.go));
 document.querySelectorAll("#langSwitch button").forEach(b=>b.classList.toggle("on",b.dataset.l===lang));
 document.documentElement.lang=lang;
 render();
+if(!user || !user.name){ showGate(); }   // first visit → ask for name before the app opens
 </script>
 </body>
 </html>

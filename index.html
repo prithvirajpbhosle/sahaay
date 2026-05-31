@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1F6F5C">
+<title>Sahaay — Know what you're owed</title>
+<style>
+  :root{
+    --accent:#1F6F5C; --accent-dark:#155244; --accent-light:#E7F2EE;
+    --bg:#F7F8F7; --card:#FFFFFF; --ink:#1A1A1A; --muted:#5A6360;
+    --line:#E2E6E4; --warn:#B5651D; --ok:#1F6F5C; --gold:#C8922B;
+    --shadow:0 2px 10px rgba(0,0,0,.06);
+  }
+  head,title,style,script{display:none!important}
+  div,header,nav,footer,section,h1,h2,h3,p,ul{display:block}
+  li{display:list-item}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.5;font-size:16px;-webkit-font-smoothing:antialiased}
+  .app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:78px}
+  /* Top bar */
+  .topbar{position:sticky;top:0;z-index:20;background:var(--accent);color:#fff;
+    padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:19px;letter-spacing:.3px}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:#9FE0CC;display:inline-block}
+  .lang{display:flex;gap:4px;background:rgba(255,255,255,.15);border-radius:20px;padding:3px}
+  .lang button{border:0;background:transparent;color:#EAF6F1;font-size:13px;font-weight:600;
+    padding:5px 9px;border-radius:16px;cursor:pointer;font-family:inherit}
+  .lang button.on{background:#fff;color:var(--accent)}
+  /* Screen container */
+  .screen{padding:18px 16px 24px;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h1{font-size:23px;margin:6px 0 8px;font-weight:800;line-height:1.25}
+  h2{font-size:18px;margin:2px 0 6px;font-weight:700}
+  p.sub{color:var(--muted);margin:0 0 18px;font-size:15px}
+  /* Hero */
+  .hero{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;
+    border-radius:18px;padding:22px 18px;margin-bottom:18px;box-shadow:var(--shadow)}
+  .hero h1{color:#fff;font-size:24px}
+  .hero p{color:#D7EDE6;margin:8px 0 0;font-size:15px}
+  .stat{display:flex;gap:10px;margin-top:16px}
+  .stat div{flex:1;background:rgba(255,255,255,.12);border-radius:12px;padding:10px}
+  .stat b{display:block;font-size:20px}
+  .stat span{font-size:11.5px;color:#CFE8DF;line-height:1.3;display:block;margin-top:2px}
+  /* Buttons */
+  .btn{display:block;width:100%;border:0;background:var(--accent);color:#fff;font-weight:700;
+    font-size:17px;padding:16px;border-radius:14px;cursor:pointer;font-family:inherit;box-shadow:var(--shadow);
+    transition:transform .08s}
+  .btn:active{transform:scale(.98)}
+  .btn.secondary{background:#fff;color:var(--accent);border:1.5px solid var(--accent);box-shadow:none}
+  .btn.ghost{background:transparent;color:var(--muted);box-shadow:none;font-weight:600;font-size:15px;padding:10px}
+  /* Question cards */
+  .qwrap{margin-top:6px}
+  .progress{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-bottom:18px}
+  .progress i{display:block;height:100%;background:var(--accent);border-radius:6px;transition:width .3s}
+  .qstep{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:6px}
+  .opt{display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--line);
+    border-radius:14px;padding:15px 16px;margin-bottom:11px;cursor:pointer;font-size:16px;font-weight:600;
+    transition:.12s}
+  .opt:active{transform:scale(.99)}
+  .opt.sel{border-color:var(--accent);background:var(--accent-light)}
+  .opt .em{font-size:22px;width:26px;text-align:center}
+  .opt.multi .chk{margin-left:auto;width:22px;height:22px;border-radius:6px;border:2px solid var(--line);flex:none}
+  .opt.multi.sel .chk{background:var(--accent);border-color:var(--accent);position:relative}
+  .opt.multi.sel .chk:after{content:"✓";color:#fff;font-size:14px;position:absolute;top:-1px;left:3px}
+  /* Result cards */
+  .resulthead{background:var(--accent-light);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+  .resulthead b{color:var(--accent-dark)}
+  .card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;border:1px solid var(--line)}
+  .card .ch{padding:16px;display:flex;gap:13px;align-items:flex-start;cursor:pointer}
+  .card .ic{width:42px;height:42px;border-radius:11px;background:var(--accent-light);display:flex;align-items:center;
+    justify-content:center;font-size:22px;flex:none}
+  .card .ti{flex:1}
+  .card .ti h2{font-size:16.5px;margin:0}
+  .card .ti .tag{font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-light);
+    display:inline-block;padding:2px 8px;border-radius:10px;margin-top:5px}
+  .card .ti .tag.money{color:#8a6300;background:#FBF1D9}
+  .card .ti p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+  .card .arrow{align-self:center;color:var(--muted);transition:transform .2s;font-size:18px}
+  .card.open .arrow{transform:rotate(90deg)}
+  .card .body{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 16px}
+  .card.open .body{max-height:1400px;padding:0 16px 16px}
+  .card .body h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:14px 0 7px}
+  .step{display:flex;gap:10px;margin-bottom:9px;font-size:14.5px}
+  .step .n{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;
+    font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+  .doclist{list-style:none;padding:0;margin:0}
+  .doclist li{font-size:14.5px;padding:6px 0 6px 24px;position:relative;border-bottom:1px solid var(--line)}
+  .doclist li:last-child{border-bottom:0}
+  .doclist li:before{content:"📄";position:absolute;left:0;top:6px;font-size:13px}
+  .tip{background:#FBF1D9;border-radius:10px;padding:11px 13px;font-size:13.5px;color:#6b5012;margin-top:12px}
+  /* Checklist screen */
+  .ckitem{display:flex;gap:13px;align-items:flex-start;background:var(--card);border:1px solid var(--line);
+    border-radius:13px;padding:14px;margin-bottom:10px;cursor:pointer}
+  .ckitem .box{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex:none;margin-top:1px;position:relative}
+  .ckitem.done .box{background:var(--ok);border-color:var(--ok)}
+  .ckitem.done .box:after{content:"✓";color:#fff;position:absolute;top:-2px;left:4px;font-size:15px;font-weight:700}
+  .ckitem .lbl b{display:block;font-size:15px}
+  .ckitem .lbl span{font-size:13px;color:var(--muted)}
+  .ckitem.done .lbl b{text-decoration:line-through;color:var(--muted)}
+  .ckprog{text-align:center;font-weight:700;color:var(--accent);margin:0 0 14px}
+  /* bottom nav */
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+    background:#fff;border-top:1px solid var(--line);display:flex;z-index:20}
+  .nav button{flex:1;border:0;background:none;padding:11px 0 9px;font-family:inherit;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600}
+  .nav button .ni{display:block;font-size:21px;margin-bottom:1px;filter:grayscale(1);opacity:.55}
+  .nav button.on{color:var(--accent)}
+  .nav button.on .ni{filter:none;opacity:1}
+  .disclaimer{font-size:12px;color:var(--muted);background:#EEF1F0;border-radius:10px;padding:11px 13px;margin-top:18px;line-height:1.45}
+  .hide{display:none!important}
+  /* Desktop: present the mobile column as an intentional centered frame */
+  @media(min-width:560px){
+    body{background:radial-gradient(circle at 50% 0%, #DCE8E3, #C7D6D0)}
+    .app{box-shadow:0 0 50px rgba(0,0,0,.13);min-height:100vh}
+  }
+  .backlink{color:var(--accent);font-weight:600;font-size:14px;background:none;border:0;padding:6px 0;cursor:pointer;font-family:inherit;margin-bottom:6px;display:inline-flex;gap:5px;align-items:center}
+  /* Feedback slide */
+  .fbcard{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .fbq{font-size:16.5px;font-weight:700;margin:0 0 4px;display:flex;gap:9px;align-items:flex-start}
+  .fbq .qn{font-size:18px}
+  .ynrow{display:flex;gap:10px;margin-top:11px}
+  .yn{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:13px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;transition:.12s}
+  .yn:active{transform:scale(.98)}
+  .yn.sel{border-color:var(--accent);background:var(--accent-light);color:var(--accent-dark)}
+  .spk{display:inline-flex;align-items:center;gap:6px;background:var(--accent-light);color:var(--accent-dark);
+    border:0;border-radius:20px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+  .spk:active{transform:scale(.97)}
+  .spk.mini{padding:5px 10px;font-size:12px;margin:0}
+  .spk.speaking{background:var(--accent);color:#fff}
+  .fbintro{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  /* Contact form */
+  .inp{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px;
+    font-family:inherit;margin-bottom:11px;background:#fff;color:var(--ink)}
+  .inp:focus{outline:0;border-color:var(--accent)}
+  .consent{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--muted);cursor:pointer;margin-bottom:13px;line-height:1.4}
+  .consent input{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--accent)}
+  .cmsg{background:var(--accent-light);color:var(--accent-dark);border-radius:12px;padding:13px;font-size:14.5px;font-weight:600;text-align:center}
+  .cardlite{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .cardlite h2{margin:0 0 3px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span><span id="brandName">Sahaay</span></div>
+    <div class="lang" id="langSwitch">
+      <button data-l="en" class="on">EN</button>
+      <button data-l="hi">हिं</button>
+      <button data-l="mr">मरा</button>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen"></div>
+  <!-- QUESTIONS -->
+  <div id="screen-q" class="screen hide"></div>
+  <!-- RESULTS -->
+  <div id="screen-results" class="screen hide"></div>
+  <!-- CHECKLIST -->
+  <div id="screen-checklist" class="screen hide"></div>
+
+  <div class="nav" id="nav">
+    <button data-go="home" class="on"><span class="ni">🏠</span><span class="nlabel" data-k="navHome">Home</span></button>
+    <button data-go="results"><span class="ni">📋</span><span class="nlabel" data-k="navMine">My benefits</span></button>
+    <button data-go="checklist"><span class="ni">✅</span><span class="nlabel" data-k="navList">Checklist</span></button>
+  </div>
+</div>
+
+<script>
+/* ============================ DATA ============================ */
+const STR = {
+  en:{
+    brand:"Sahaay", navHome:"Home", navMine:"My benefits", navList:"Checklist",
+    heroTitle:"Know what you're owed.",
+    heroSub:"You have rights after you leave care. This free guide shows you what you can claim — and exactly how.",
+    stat1n:"₹4,000", stat1t:"per month aftercare support you may be entitled to",
+    stat2n:"18–23", stat2t:"the ages the law protects care-leavers",
+    stat3n:"100%", stat3t:"free — Sahaay never charges you",
+    start:"Find my benefits", restart:"Start again",
+    qIntro:"3 quick questions. No name or ID needed.",
+    q1:"How old are you?",
+    q1o:[["Under 18","🧒","u18"],["18 to 21","🧑","18_21"],["21 to 23","🧑‍🎓","21_23"],["Over 23","🧓","o23"]],
+    q2:"Where are you now?",
+    q2o:[["I live in a CCI / children's home","🏠","in"],["I left within the last 3 years","🚪","left_recent"],["I left more than 3 years ago","🕰️","left_old"]],
+    q3:"What do you need help with most? (pick any)",
+    q3o:[["Money / monthly support","💰","money"],["My documents (Aadhaar, bank…)","📄","docs"],["Studying further","📚","edu"],["A job or skills","🛠️","job"],["A safe place to stay","🛏️","house"]],
+    next:"See my benefits", back:"Back",
+    resTitle:"Here's what you may be able to claim",
+    resSub:"Based on your answers. Tap each card for the steps. Always confirm with your DCPU or CWC.",
+    none:"Based on your age, the aftercare law may not directly apply — but you can still use the document and skills guides below. Talk to a DCPU officer to be sure.",
+    stepsT:"How to claim it", docsT:"Documents you'll need", whoT:"Who to approach",
+    addList:"Add to my checklist", added:"Added ✓",
+    ckTitle:"My checklist", ckSub:"Your progress is saved on this phone.",
+    ckEmpty:"Nothing here yet. Open a benefit and tap \"Add to my checklist\" to track your steps.",
+    ckDone:"done",
+    disclaimer:"Sahaay gives guidance, not legal advice. Rules and amounts can change and differ by state. Always confirm with your District Child Protection Unit (DCPU) or Child Welfare Committee (CWC).",
+    glossDCPU:"DCPU = District Child Protection Unit (the government office in your district that handles child protection & aftercare).",
+    fbStep:"Quick check", fbTitle:"Just 2 quick questions",
+    fbIntro:"This helps us make Sahaay easier for everyone. Tap 🔊 to hear any question read aloud.",
+    fbQ1:"Are you able to read this comfortably in this language?",
+    fbQ2:"Would you like a 🔊 sound button next to the text, to hear it read aloud?",
+    yes:"Yes", no:"No", listen:"Listen", fbContinue:"Continue",
+    contactTitle:"Want help with these steps?",
+    contactSub:"Leave your number and we can guide you (optional). Your details stay private and are only used to help you.",
+    nameLabel:"Your name (optional)", phoneLabel:"WhatsApp / phone number",
+    consentLabel:"I agree to be contacted by Sahaay to help me with these benefits.",
+    contactSubmit:"Send", contactThanks:"Thank you! We'll reach out to help you. 💚",
+    needConsent:"Please tick the box so we know it's okay to contact you.",
+    needPhone:"Please enter a phone number.",
+  },
+  hi:{
+    brand:"सहाय", navHome:"होम", navMine:"मेरे लाभ", navList:"चेकलिस्ट",
+    heroTitle:"जानिए आपका क्या हक़ है।",
+    heroSub:"संस्था छोड़ने के बाद भी आपके अधिकार हैं। यह मुफ़्त गाइड बताती है कि आप क्या पा सकते हैं — और कैसे।",
+    stat1n:"₹4,000", stat1t:"हर महीने आफ्टरकेयर सहायता जिसके आप हक़दार हो सकते हैं",
+    stat2n:"18–23", stat2t:"इन उम्रों में क़ानून केयर-लीवर्स की रक्षा करता है",
+    stat3n:"100%", stat3t:"मुफ़्त — सहाय कभी पैसे नहीं लेता",
+    start:"मेरे लाभ खोजें", restart:"फिर से शुरू करें",
+    qIntro:"3 छोटे सवाल। नाम या आईडी की ज़रूरत नहीं।",
+    q1:"आपकी उम्र क्या है?",
+    q1o:[["18 से कम","🧒","u18"],["18 से 21","🧑","18_21"],["21 से 23","🧑‍🎓","21_23"],["23 से ज़्यादा","🧓","o23"]],
+    q2:"अभी आप कहाँ हैं?",
+    q2o:[["मैं CCI / बाल गृह में रहता/रहती हूँ","🏠","in"],["मैंने पिछले 3 साल में छोड़ा","🚪","left_recent"],["मैंने 3 साल से पहले छोड़ा","🕰️","left_old"]],
+    q3:"आपको सबसे ज़्यादा किसमें मदद चाहिए? (कोई भी चुनें)",
+    q3o:[["पैसा / मासिक सहायता","💰","money"],["मेरे दस्तावेज़ (आधार, बैंक…)","📄","docs"],["आगे पढ़ाई","📚","edu"],["नौकरी या हुनर","🛠️","job"],["रहने की सुरक्षित जगह","🛏️","house"]],
+    next:"मेरे लाभ देखें", back:"वापस",
+    resTitle:"आप यह पाने के हक़दार हो सकते हैं",
+    resSub:"आपके जवाबों के आधार पर। कदमों के लिए हर कार्ड पर टैप करें। हमेशा अपने DCPU या CWC से पुष्टि करें।",
+    none:"आपकी उम्र के अनुसार आफ्टरकेयर क़ानून सीधे लागू न हो — पर नीचे दस्तावेज़ और हुनर गाइड का उपयोग करें। पक्का करने के लिए DCPU अधिकारी से बात करें।",
+    stepsT:"कैसे पाएं", docsT:"ज़रूरी दस्तावेज़", whoT:"किससे संपर्क करें",
+    addList:"मेरी चेकलिस्ट में जोड़ें", added:"जोड़ा ✓",
+    ckTitle:"मेरी चेकलिस्ट", ckSub:"आपकी प्रगति इसी फ़ोन में सुरक्षित है।",
+    ckEmpty:"अभी कुछ नहीं है। कोई लाभ खोलें और \"मेरी चेकलिस्ट में जोड़ें\" दबाएं।",
+    ckDone:"पूरा",
+    disclaimer:"सहाय मार्गदर्शन देता है, क़ानूनी सलाह नहीं। नियम और रकम बदल सकते हैं और राज्य के अनुसार अलग हैं। हमेशा अपने ज़िला बाल संरक्षण इकाई (DCPU) या बाल कल्याण समिति (CWC) से पुष्टि करें।",
+    glossDCPU:"DCPU = ज़िला बाल संरक्षण इकाई (आपके ज़िले का सरकारी कार्यालय जो बाल संरक्षण व आफ्टरकेयर देखता है)।",
+    fbStep:"छोटी जाँच", fbTitle:"बस 2 छोटे सवाल",
+    fbIntro:"इससे हमें सहाय सबके लिए आसान बनाने में मदद मिलती है। किसी भी सवाल को सुनने के लिए 🔊 दबाएं।",
+    fbQ1:"क्या आप इसे इस भाषा में आराम से पढ़ पा रहे हैं?",
+    fbQ2:"क्या आप टेक्स्ट के पास एक 🔊 आवाज़ बटन चाहेंगे, जिससे उसे सुना जा सके?",
+    yes:"हाँ", no:"नहीं", listen:"सुनें", fbContinue:"आगे बढ़ें",
+    contactTitle:"इन कदमों में मदद चाहिए?",
+    contactSub:"अपना नंबर छोड़ें और हम आपका मार्गदर्शन कर सकते हैं (वैकल्पिक)। आपकी जानकारी निजी रहती है और केवल आपकी मदद के लिए उपयोग होती है।",
+    nameLabel:"आपका नाम (वैकल्पिक)", phoneLabel:"व्हाट्सएप / फ़ोन नंबर",
+    consentLabel:"मैं सहमत हूँ कि सहाय इन लाभों में मदद के लिए मुझसे संपर्क करे।",
+    contactSubmit:"भेजें", contactThanks:"धन्यवाद! हम आपकी मदद के लिए संपर्क करेंगे। 💚",
+    needConsent:"कृपया बॉक्स पर टिक करें ताकि हमें पता चले कि संपर्क करना ठीक है।",
+    needPhone:"कृपया एक फ़ोन नंबर डालें।",
+  },
+  mr:{
+    brand:"सहाय", navHome:"होम", navMine:"माझे लाभ", navList:"चेकलिस्ट",
+    heroTitle:"तुमचा हक्क काय आहे ते जाणून घ्या.",
+    heroSub:"संस्था सोडल्यानंतरही तुमचे हक्क आहेत. ही मोफत मार्गदर्शिका सांगते की तुम्ही काय मिळवू शकता — आणि कसे.",
+    stat1n:"₹4,000", stat1t:"दरमहा आफ्टरकेअर मदत जी तुम्हाला मिळू शकते",
+    stat2n:"18–23", stat2t:"या वयात कायदा केअर-लीव्हर्सचे रक्षण करतो",
+    stat3n:"100%", stat3t:"मोफत — सहाय कधीही पैसे घेत नाही",
+    start:"माझे लाभ शोधा", restart:"पुन्हा सुरू करा",
+    qIntro:"3 छोटे प्रश्न. नाव किंवा ओळखपत्र नको.",
+    q1:"तुमचे वय किती आहे?",
+    q1o:[["18 पेक्षा कमी","🧒","u18"],["18 ते 21","🧑","18_21"],["21 ते 23","🧑‍🎓","21_23"],["23 पेक्षा जास्त","🧓","o23"]],
+    q2:"आता तुम्ही कुठे आहात?",
+    q2o:[["मी CCI / बालगृहात राहतो/राहते","🏠","in"],["मी मागील 3 वर्षांत सोडले","🚪","left_recent"],["मी 3 वर्षांपूर्वी सोडले","🕰️","left_old"]],
+    q3:"तुम्हाला सर्वात जास्त कशात मदत हवी? (कोणतेही निवडा)",
+    q3o:[["पैसा / मासिक मदत","💰","money"],["माझी कागदपत्रे (आधार, बँक…)","📄","docs"],["पुढील शिक्षण","📚","edu"],["नोकरी किंवा कौशल्य","🛠️","job"],["राहण्यासाठी सुरक्षित जागा","🛏️","house"]],
+    next:"माझे लाभ पहा", back:"मागे",
+    resTitle:"तुम्ही हे मिळवू शकता",
+    resSub:"तुमच्या उत्तरांवर आधारित. पायऱ्यांसाठी प्रत्येक कार्डवर टॅप करा. नेहमी तुमच्या DCPU किंवा CWC कडून खात्री करा.",
+    none:"तुमच्या वयानुसार आफ्टरकेअर कायदा थेट लागू नसेल — पण खालील कागदपत्रे व कौशल्य मार्गदर्शिका वापरा. खात्रीसाठी DCPU अधिकाऱ्याशी बोला.",
+    stepsT:"कसे मिळवायचे", docsT:"लागणारी कागदपत्रे", whoT:"कोणाशी संपर्क करावा",
+    addList:"माझ्या चेकलिस्टमध्ये जोडा", added:"जोडले ✓",
+    ckTitle:"माझी चेकलिस्ट", ckSub:"तुमची प्रगती याच फोनमध्ये साठवली जाते.",
+    ckEmpty:"अजून काही नाही. एखादा लाभ उघडा आणि \"माझ्या चेकलिस्टमध्ये जोडा\" दाबा.",
+    ckDone:"पूर्ण",
+    disclaimer:"सहाय मार्गदर्शन देते, कायदेशीर सल्ला नाही. नियम व रक्कम बदलू शकतात व राज्यानुसार वेगळे असतात. नेहमी तुमच्या जिल्हा बाल संरक्षण कक्ष (DCPU) किंवा बाल कल्याण समिती (CWC) कडून खात्री करा.",
+    glossDCPU:"DCPU = जिल्हा बाल संरक्षण कक्ष (तुमच्या जिल्ह्यातील सरकारी कार्यालय जे बाल संरक्षण व आफ्टरकेअर पाहते).",
+    fbStep:"छोटी तपासणी", fbTitle:"फक्त 2 छोटे प्रश्न",
+    fbIntro:"यामुळे आम्हाला सहाय सर्वांसाठी सोपे करता येते. कोणताही प्रश्न ऐकण्यासाठी 🔊 दाबा.",
+    fbQ1:"तुम्ही हे या भाषेत आरामात वाचू शकता का?",
+    fbQ2:"मजकुराशेजारी 🔊 आवाज बटण हवे का, जेणेकरून ते ऐकता येईल?",
+    yes:"होय", no:"नाही", listen:"ऐका", fbContinue:"पुढे जा",
+    contactTitle:"या पायऱ्यांमध्ये मदत हवी?",
+    contactSub:"तुमचा नंबर द्या आणि आम्ही तुम्हाला मार्गदर्शन करू शकतो (ऐच्छिक). तुमची माहिती खाजगी राहते व फक्त तुमच्या मदतीसाठी वापरली जाते.",
+    nameLabel:"तुमचे नाव (ऐच्छिक)", phoneLabel:"व्हॉट्सॲप / फोन नंबर",
+    consentLabel:"सहाय ने या लाभांसाठी मदत करण्यासाठी माझ्याशी संपर्क साधावा यास मी संमती देतो/देते.",
+    contactSubmit:"पाठवा", contactThanks:"धन्यवाद! आम्ही तुम्हाला मदतीसाठी संपर्क करू. 💚",
+    needConsent:"कृपया बॉक्सवर टिक करा जेणेकरून संपर्क करणे ठीक आहे हे आम्हाला कळेल.",
+    needPhone:"कृपया फोन नंबर टाका.",
+  }
+};
+
+/* Benefits content. each step/doc/who is a {en,hi,mr} object */
+function T(en,hi,mr){return {en,hi,mr};}
+const BENEFITS = [
+  {
+    id:"aftercare", icon:"🪪", money:true,
+    title:T("Aftercare Support (JJ Act, Sec 46)","आफ्टरकेयर सहायता (JJ अधिनियम, धारा 46)","आफ्टरकेअर मदत (JJ कायदा, कलम 46)"),
+    tag:T("Up to ₹4,000 / month","₹4,000/माह तक","₹4,000/महिना पर्यंत"),
+    desc:T("Financial + education + housing support for youth aged 18–21 (up to 23) who have left a CCI.",
+           "18–21 (23 तक) के उन युवाओं के लिए जिन्होंने CCI छोड़ा है — पैसा, पढ़ाई व रहने की मदद।",
+           "CCI सोडलेल्या 18–21 (23 पर्यंत) तरुणांसाठी पैसा, शिक्षण व निवास मदत."),
+    appliesTo:{age:["18_21","21_23"], anyState:true},
+    steps:[
+      T("Tell the staff at your CCI you want to apply for aftercare before you turn 18 — or as soon as possible after.",
+        "18 साल का होने से पहले — या जल्द से जल्द — अपने CCI स्टाफ को बताएं कि आप आफ्टरकेयर के लिए आवेदन करना चाहते हैं।",
+        "18 वर्षांचे होण्याआधी — किंवा शक्य तितक्या लवकर — तुमच्या CCI कर्मचाऱ्यांना सांगा की तुम्हाला आफ्टरकेअरसाठी अर्ज करायचा आहे."),
+      T("Your case goes to the Child Welfare Committee (CWC), which reviews your situation and passes an order for support.",
+        "आपका मामला बाल कल्याण समिति (CWC) के पास जाता है, जो आपकी स्थिति देखकर सहायता का आदेश देती है।",
+        "तुमचे प्रकरण बाल कल्याण समिती (CWC) कडे जाते, जी तुमची परिस्थिती पाहून मदतीचा आदेश देते."),
+      T("The DCPU then arranges the monthly support (₹4,000 under Mission Vatsalya) and links you to education/skills/housing.",
+        "फिर DCPU मासिक सहायता (मिशन वात्सल्य के तहत ₹4,000) की व्यवस्था करता है और पढ़ाई/हुनर/रहने से जोड़ता है।",
+        "नंतर DCPU मासिक मदत (मिशन वात्सल्य अंतर्गत ₹4,000) ची व्यवस्था करते व शिक्षण/कौशल्य/निवासाशी जोडते."),
+      T("If you still study or have no home, support can be extended up to age 23 — ask the CWC about this.",
+        "अगर आप अभी पढ़ रहे हैं या घर नहीं है, तो सहायता 23 साल तक बढ़ सकती है — CWC से पूछें।",
+        "जर तुम्ही शिकत असाल किंवा घर नसेल, तर मदत 23 वर्षांपर्यंत वाढू शकते — CWC ला विचारा."),
+    ],
+    docs:[
+      T("Discharge / leaving certificate from your CCI","CCI से डिस्चार्ज / छोड़ने का प्रमाणपत्र","CCI चा डिस्चार्ज / सोडल्याचा दाखला"),
+      T("Aadhaar card","आधार कार्ड","आधार कार्ड"),
+      T("Bank account (in your name)","बैंक खाता (आपके नाम)","बँक खाते (तुमच्या नावे)"),
+      T("Two passport photos","दो पासपोर्ट फोटो","दोन पासपोर्ट फोटो"),
+    ],
+    who:T("Your CCI superintendent, then the Child Welfare Committee (CWC) / DCPU in your district.",
+          "आपके CCI अधीक्षक, फिर आपके ज़िले की बाल कल्याण समिति (CWC) / DCPU।",
+          "तुमचे CCI अधीक्षक, नंतर तुमच्या जिल्ह्याची बाल कल्याण समिती (CWC) / DCPU."),
+    tip:T("Apply early — before you turn 18 if you can. Applications after leaving are harder but still possible.",
+          "जल्दी आवेदन करें — हो सके तो 18 से पहले। बाद में भी संभव है पर मुश्किल।",
+          "लवकर अर्ज करा — शक्य असल्यास 18 आधी. नंतरही शक्य आहे पण अवघड.")
+  },
+  {
+    id:"docs", icon:"📄", money:false,
+    title:T("Get your core documents","अपने ज़रूरी दस्तावेज़ बनवाएं","तुमची मुख्य कागदपत्रे मिळवा"),
+    tag:T("The foundation for everything","सब कुछ के लिए नींव","सर्व गोष्टींचा पाया"),
+    desc:T("Without these you can't claim any benefit, open a bank account, or get a job. Sort these first.",
+           "इनके बिना कोई लाभ, बैंक खाता या नौकरी नहीं मिल सकती। पहले ये बनवाएं।",
+           "यांशिवाय कोणताही लाभ, बँक खाते किंवा नोकरी मिळणार नाही. आधी हे करा."),
+    appliesTo:{always:true},
+    steps:[
+      T("Aadhaar: visit any Aadhaar/CSC centre. Your CCI can give a certificate as address/identity proof.",
+        "आधार: किसी भी आधार/CSC केंद्र जाएं। CCI पते/पहचान के प्रमाण के लिए प्रमाणपत्र दे सकता है।",
+        "आधार: कोणत्याही आधार/CSC केंद्रावर जा. CCI पत्ता/ओळख पुराव्यासाठी दाखला देऊ शकते."),
+      T("Bank account: open a zero-balance account with Aadhaar. This is where support money will come.",
+        "बैंक खाता: आधार से ज़ीरो-बैलेंस खाता खोलें। सहायता का पैसा यहीं आएगा।",
+        "बँक खाते: आधारने झिरो-बॅलन्स खाते उघडा. मदतीचे पैसे इथेच येतील."),
+      T("PAN card: apply free online or at a centre — needed for jobs and bank limits.",
+        "पैन कार्ड: ऑनलाइन या केंद्र पर मुफ़्त बनवाएं — नौकरी व बैंक के लिए ज़रूरी।",
+        "पॅन कार्ड: ऑनलाइन किंवा केंद्रावर मोफत करा — नोकरी व बँकेसाठी आवश्यक."),
+      T("Ask your CCI for: leaving certificate, school records, and (if applicable) caste & domicile certificates.",
+        "CCI से लें: छोड़ने का प्रमाणपत्र, स्कूल रिकॉर्ड, और (यदि लागू हो) जाति व निवास प्रमाणपत्र।",
+        "CCI कडून घ्या: सोडल्याचा दाखला, शाळेचे रेकॉर्ड, आणि (लागू असल्यास) जात व अधिवास दाखला."),
+    ],
+    docs:[
+      T("Proof from CCI (identity / address letter)","CCI से प्रमाण (पहचान/पता पत्र)","CCI चा पुरावा (ओळख/पत्ता पत्र)"),
+      T("Any school marksheet you have","आपके पास कोई स्कूल मार्कशीट","तुमच्याकडील शाळेची गुणपत्रिका"),
+      T("Photos","फोटो","फोटो"),
+    ],
+    who:T("Aadhaar/CSC centre, any bank branch, and your CCI for records.",
+          "आधार/CSC केंद्र, कोई बैंक शाखा, और रिकॉर्ड के लिए आपका CCI।",
+          "आधार/CSC केंद्र, कोणतीही बँक शाखा, आणि रेकॉर्डसाठी तुमचे CCI."),
+    tip:T("Keep digital photos of every document on your phone or email — you'll need them again and again.",
+          "हर दस्तावेज़ की फोटो फ़ोन या ईमेल में रखें — बार-बार काम आएगी।",
+          "प्रत्येक कागदपत्राचा फोटो फोन किंवा ईमेलमध्ये ठेवा — पुन्हा पुन्हा लागेल.")
+  },
+  {
+    id:"edu", icon:"📚", money:true,
+    title:T("Education support & scholarships","शिक्षा सहायता व छात्रवृत्ति","शिक्षण मदत व शिष्यवृत्ती"),
+    tag:T("Fee waivers + scholarships","फीस माफ़ी + छात्रवृत्ति","फी माफी + शिष्यवृत्ती"),
+    desc:T("Continue school, college or ITI. Several scholarships and fee waivers exist for care-leavers and low-income youth.",
+           "स्कूल, कॉलेज या ITI जारी रखें। केयर-लीवर्स व कम आय वाले युवाओं के लिए छात्रवृत्ति व फीस माफ़ी हैं।",
+           "शाळा, कॉलेज किंवा ITI सुरू ठेवा. केअर-लीव्हर्स व कमी उत्पन्न तरुणांसाठी शिष्यवृत्ती व फी माफी आहेत."),
+    appliesTo:{needs:["edu"], orAge:["18_21","21_23","u18"]},
+    steps:[
+      T("Tell the DCPU you want to keep studying — aftercare support is meant to cover education costs.",
+        "DCPU को बताएं कि आप पढ़ना जारी रखना चाहते हैं — आफ्टरकेयर शिक्षा खर्च के लिए है।",
+        "DCPU ला सांगा की तुम्हाला शिक्षण सुरू ठेवायचे आहे — आफ्टरकेअर शिक्षण खर्चासाठी आहे."),
+      T("Apply for post-matric scholarships on the National Scholarship Portal (scholarships.gov.in) and the Maharashtra MahaDBT portal.",
+        "पोस्ट-मैट्रिक छात्रवृत्ति के लिए नेशनल स्कॉलरशिप पोर्टल (scholarships.gov.in) व महाराष्ट्र MahaDBT पर आवेदन करें।",
+        "पोस्ट-मॅट्रिक शिष्यवृत्तीसाठी नॅशनल स्कॉलरशिप पोर्टल (scholarships.gov.in) व महाराष्ट्र MahaDBT वर अर्ज करा."),
+      T("Ask your college about fee concessions for orphans / EWS students — many waive or reduce fees.",
+        "अपने कॉलेज से अनाथ / EWS छात्रों के लिए फीस रियायत पूछें — कई माफ़ या कम करते हैं।",
+        "तुमच्या कॉलेजला अनाथ / EWS विद्यार्थ्यांसाठी फी सवलत विचारा — अनेक माफ किंवा कमी करतात."),
+    ],
+    docs:[
+      T("Income/orphan certificate (CCI or tahsildar can help)","आय/अनाथ प्रमाणपत्र (CCI या तहसीलदार से)","उत्पन्न/अनाथ दाखला (CCI किंवा तहसीलदार)"),
+      T("Previous marksheets","पिछली मार्कशीट","मागील गुणपत्रिका"),
+      T("Aadhaar + bank account","आधार + बैंक खाता","आधार + बँक खाते"),
+    ],
+    who:T("Your college office, the DCPU, and the scholarship portals.",
+          "आपका कॉलेज कार्यालय, DCPU, और छात्रवृत्ति पोर्टल।",
+          "तुमचे कॉलेज कार्यालय, DCPU, आणि शिष्यवृत्ती पोर्टल."),
+    tip:T("Scholarship deadlines are usually around the start of the academic year — don't miss them.",
+          "छात्रवृत्ति की समय-सीमा आमतौर पर सत्र की शुरुआत में होती है — चूकें नहीं।",
+          "शिष्यवृत्तीची मुदत सहसा शैक्षणिक वर्षाच्या सुरुवातीला असते — चुकवू नका.")
+  },
+  {
+    id:"job", icon:"🛠️", money:false,
+    title:T("Skills & a first job","हुनर व पहली नौकरी","कौशल्य व पहिली नोकरी"),
+    tag:T("Free training + placement","मुफ़्त ट्रेनिंग + प्लेसमेंट","मोफत प्रशिक्षण + प्लेसमेंट"),
+    desc:T("Free skill training with job placement through government and NGO programmes.",
+           "सरकारी व NGO कार्यक्रमों से मुफ़्त हुनर ट्रेनिंग व नौकरी।",
+           "सरकारी व NGO कार्यक्रमांद्वारे मोफत कौशल्य प्रशिक्षण व नोकरी."),
+    appliesTo:{needs:["job"], orAge:["18_21","21_23","o23","left_recent"]},
+    steps:[
+      T("Register free on Skill India Digital (skillindiadigital.gov.in) and pick a trade that's hiring near you.",
+        "Skill India Digital (skillindiadigital.gov.in) पर मुफ़्त रजिस्टर करें और पास में नौकरी वाला ट्रेड चुनें।",
+        "Skill India Digital (skillindiadigital.gov.in) वर मोफत नोंदणी करा व जवळ नोकरी असलेला ट्रेड निवडा."),
+      T("Ask the DCPU or an NGO (e.g. Catalysts for Social Action, Salaam Bombay) about care-leaver skilling batches.",
+        "DCPU या NGO (जैसे Catalysts for Social Action, Salaam Bombay) से केयर-लीवर हुनर बैच पूछें।",
+        "DCPU किंवा NGO (उदा. Catalysts for Social Action, Salaam Bombay) ला केअर-लीव्हर कौशल्य बॅच विचारा."),
+      T("Many courses (retail, hospitality, IT support, logistics) include a guaranteed interview or placement.",
+        "कई कोर्स (रिटेल, हॉस्पिटैलिटी, IT सपोर्ट, लॉजिस्टिक्स) में गारंटीड इंटरव्यू या प्लेसमेंट होता है।",
+        "अनेक कोर्समध्ये (रिटेल, हॉस्पिटॅलिटी, IT सपोर्ट, लॉजिस्टिक्स) हमी इंटरव्ह्यू किंवा प्लेसमेंट असते."),
+    ],
+    docs:[
+      T("Aadhaar + bank account","आधार + बैंक खाता","आधार + बँक खाते"),
+      T("Highest marksheet you have","आपकी सबसे ऊँची मार्कशीट","तुमची सर्वोच्च गुणपत्रिका"),
+    ],
+    who:T("Skill India centres, ITIs, and aftercare NGOs.",
+          "Skill India केंद्र, ITI, और आफ्टरकेयर NGO।",
+          "Skill India केंद्र, ITI, आणि आफ्टरकेअर NGO."),
+    tip:T("A short, job-linked course beats a long degree if you need to earn soon. Pick one that ends in a placement.",
+          "जल्दी कमाना है तो लंबी डिग्री से छोटा नौकरी-वाला कोर्स बेहतर। प्लेसमेंट वाला चुनें।",
+          "लवकर कमवायचे असल्यास लांब पदवीपेक्षा छोटा नोकरी-संलग्न कोर्स बरा. प्लेसमेंट असलेला निवडा.")
+  },
+  {
+    id:"house", icon:"🛏️", money:false,
+    title:T("A safe place to stay","रहने की सुरक्षित जगह","राहण्यासाठी सुरक्षित जागा"),
+    tag:T("Aftercare homes & hostels","आफ्टरकेयर गृह व हॉस्टल","आफ्टरकेअर गृह व वसतिगृह"),
+    desc:T("If you have nowhere safe to live after 18, aftercare can include group housing or hostel support.",
+           "अगर 18 के बाद रहने की सुरक्षित जगह नहीं, तो आफ्टरकेयर में ग्रुप हाउसिंग या हॉस्टल मिल सकता है।",
+           "18 नंतर सुरक्षित राहण्याची जागा नसेल, तर आफ्टरकेअरमध्ये ग्रुप हाउसिंग किंवा वसतिगृह मिळू शकते."),
+    appliesTo:{needs:["house"], orAge:["18_21","21_23"]},
+    steps:[
+      T("Tell the CWC/DCPU clearly that you have no safe housing — this is a recognised reason for aftercare.",
+        "CWC/DCPU को साफ़ बताएं कि रहने की सुरक्षित जगह नहीं — यह आफ्टरकेयर का मान्य कारण है।",
+        "CWC/DCPU ला स्पष्ट सांगा की सुरक्षित निवास नाही — हे आफ्टरकेअरचे मान्य कारण आहे."),
+      T("Ask about aftercare group homes run by NGOs, and about working-hostel / hostel scholarship schemes.",
+        "NGO द्वारा चलाए आफ्टरकेयर ग्रुप होम, और वर्किंग-हॉस्टल / हॉस्टल योजनाओं के बारे में पूछें।",
+        "NGO चालवत असलेले आफ्टरकेअर ग्रुप होम, व वर्किंग-हॉस्टेल / वसतिगृह योजनांबद्दल विचारा."),
+    ],
+    docs:[
+      T("Discharge certificate from CCI","CCI से डिस्चार्ज प्रमाणपत्र","CCI चा डिस्चार्ज दाखला"),
+      T("Aadhaar","आधार","आधार"),
+    ],
+    who:T("CWC / DCPU and aftercare NGOs in Mumbai.",
+          "CWC / DCPU और मुंबई के आफ्टरकेयर NGO।",
+          "CWC / DCPU आणि मुंबईतील आफ्टरकेअर NGO."),
+    tip:T("Don't wait until the day you leave. Raise housing with the CWC weeks before, so a place is ready.",
+          "छोड़ने के दिन तक न रुकें। कुछ हफ़्ते पहले CWC से बात करें ताकि जगह तैयार हो।",
+          "सोडण्याच्या दिवसापर्यंत थांबू नका. काही आठवडे आधी CWC शी बोला म्हणजे जागा तयार राहील.")
+  }
+];
+
+/* ============================ STATE ============================ */
+let lang = load("sahaay_lang") || "en";
+let answers = load("sahaay_answers") || {age:null, where:null, needs:[]};
+if(!answers.fb) answers.fb = {read:null, audio:null};
+let checklist = load("sahaay_checklist") || {}; // id -> bool done, key format benefitId
+let openCards = {};
+let stepI = 0;
+let view = "home";
+let usageSent = false;
+
+function load(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function s(key){return STR[lang][key]}
+
+/* ===================== DATA BACKEND + AUDIO ===================== */
+// Sahaay Data — Google Form (owned by Prithviraj). Every use appends a row.
+const FORM_ENDPOINT = "https://docs.google.com/forms/d/e/1FAIpQLSfj2C6cwvx8uxxSkgksENNcKt-i9RbuSBP8Pd_CcWcAnUjmkg/formResponse";
+const FIELDS = { type:"entry.254617537", details:"entry.204328594", name:"entry.487134039", whatsapp:"entry.448566359" };
+const sessionId = 's' + Date.now() + Math.random().toString(36).slice(2,7);
+
+// Device-native text-to-speech (free, no files, works offline once voices load)
+let curUtter = null;
+function speak(text, btn){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('.spk.speaking').forEach(b=>b.classList.remove('speaking'));
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang==='hi' ? 'hi-IN' : lang==='mr' ? 'mr-IN' : 'en-IN';
+  u.rate = 0.95;
+  if(btn){ btn.classList.add('speaking');
+    u.onend = ()=>btn.classList.remove('speaking');
+    u.onerror = ()=>btn.classList.remove('speaking'); }
+  curUtter = u;
+  window.speechSynthesis.speak(u);
+}
+
+// Send a row to the Google Form (auto-collects to Responses / linked Sheet).
+function postData(type, extra){
+  if(!FORM_ENDPOINT) return;
+  extra = extra||{};
+  const details = [
+    'lang='+lang,
+    'age='+(answers.age||''),
+    'where='+(answers.where||''),
+    'needs='+((answers.needs||[]).join('+')),
+    'benefits='+BENEFITS.filter(eligible).map(b=>b.id).join('+'),
+    'read='+answers.fb.read,
+    'audio='+answers.fb.audio,
+    'ts='+new Date().toISOString(),
+    'session='+sessionId
+  ].join(' | ');
+  const fd = new URLSearchParams();
+  fd.append(FIELDS.type, type);
+  fd.append(FIELDS.details, details);
+  fd.append(FIELDS.name, extra.name||'');
+  fd.append(FIELDS.whatsapp, extra.whatsapp||'');
+  try{
+    fetch(FORM_ENDPOINT,{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:fd.toString()});
+  }catch(e){}
+}
+
+/* ============================ RENDER ============================ */
+function setLang(l){lang=l;save("sahaay_lang",l);
+  document.querySelectorAll("#langSwitch button").forEach(b=>b.classList.toggle("on",b.dataset.l===l));
+  document.documentElement.lang=l; render();}
+
+function go(v){view=v; if(v==="q"){stepI=0;} if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.dataset.go===v|| (v==="q"&&b.dataset.go==="home")));
+  render(); window.scrollTo(0,0);}
+
+function eligible(b){
+  const a=answers.age, w=answers.where, n=answers.needs;
+  const r=b.appliesTo;
+  if(r.always) return true;
+  let ok=false;
+  if(r.age && r.age.includes(a)) ok=true;
+  if(r.orAge && (r.orAge.includes(a)||r.orAge.includes(w))) ok=true;
+  if(r.needs && n.some(x=>r.needs.includes(x))) ok=true;
+  return ok;
+}
+
+function render(){
+  // brand + nav labels
+  document.getElementById("brandName").textContent=s("brand");
+  document.querySelectorAll(".nlabel").forEach(e=>e.textContent=s(e.dataset.k));
+  ["home","q","results","checklist"].forEach(v=>{
+    document.getElementById("screen-"+v).classList.toggle("hide", v!==view);
+  });
+  if(view==="home") renderHome();
+  if(view==="q") renderQ();
+  if(view==="results") renderResults();
+  if(view==="checklist") renderChecklist();
+}
+
+function renderHome(){
+  const el=document.getElementById("screen-home");
+  el.innerHTML=`
+    <div class="hero">
+      <h1>${s("heroTitle")}</h1>
+      <p>${s("heroSub")}</p>
+      <div class="stat">
+        <div><b>${s("stat1n")}</b><span>${s("stat1t")}</span></div>
+        <div><b>${s("stat2n")}</b><span>${s("stat2t")}</span></div>
+        <div><b>${s("stat3n")}</b><span>${s("stat3t")}</span></div>
+      </div>
+    </div>
+    <button class="btn" id="startBtn">${s("start")} →</button>
+    <div class="disclaimer">${s("disclaimer")}</div>`;
+  el.querySelector("#startBtn").onclick=()=>go("q");
+}
+
+// Flow: age → where → feedback (thrown in between) → needs → results
+const STEPS = ["age","where","feedback","needs"];
+
+function esc(t){return String(t).replace(/"/g,"&quot;");}
+
+function renderQ(){
+  const el=document.getElementById("screen-q");
+  const total=STEPS.length;
+  const kind=STEPS[stepI];
+  const pct=Math.round(stepI/total*100);
+  const head=`
+    ${stepI>0?`<button class="backlink" id="bk">← ${s("back")}</button>`:''}
+    <div class="progress"><i style="width:${pct}%"></i></div>
+    <div class="qstep">${stepI+1} / ${total}</div>`;
+
+  if(kind==="feedback"){ renderFeedback(el,head); return; }
+
+  // Question steps (age / where / needs)
+  const cfg={
+    age:{key:"age", q:s("q1"), opts:STR[lang].q1o, multi:false, intro:s("qIntro")},
+    where:{key:"where", q:s("q2"), opts:STR[lang].q2o, multi:false},
+    needs:{key:"needs", q:s("q3"), opts:STR[lang].q3o, multi:true},
+  }[kind];
+  let optsHtml=cfg.opts.map(o=>{
+    const val=o[2];
+    let sel = cfg.multi ? answers.needs.includes(val) : answers[cfg.key]===val;
+    return `<div class="opt ${cfg.multi?'multi':''} ${sel?'sel':''}" data-v="${val}">
+      <span class="em">${o[1]}</span><span>${o[0]}</span>${cfg.multi?'<span class="chk"></span>':''}</div>`;
+  }).join("");
+  el.innerHTML=`${head}
+    <h1>${cfg.q}</h1>
+    ${cfg.intro?`<p class="sub">${cfg.intro}</p>`:''}
+    <div class="qwrap">${optsHtml}</div>
+    <div style="height:10px"></div>
+    ${cfg.multi?`<button class="btn" id="nx">${s("next")} →</button>`:''}`;
+  if(el.querySelector("#bk")) el.querySelector("#bk").onclick=()=>{stepI--;renderQ();};
+  el.querySelectorAll(".opt").forEach(o=>o.onclick=()=>{
+    const v=o.dataset.v;
+    if(cfg.multi){
+      const i=answers.needs.indexOf(v);
+      if(i>=0)answers.needs.splice(i,1); else answers.needs.push(v);
+      save("sahaay_answers",answers); renderQ();
+    } else {
+      answers[cfg.key]=v; save("sahaay_answers",answers);
+      stepI++; renderQ();
+    }
+  });
+  if(el.querySelector("#nx")) el.querySelector("#nx").onclick=()=>go("results");
+}
+
+function renderFeedback(el, head){
+  const r=answers.fb.read, a=answers.fb.audio;
+  el.innerHTML=`${head}
+    <h1>${s("fbTitle")}</h1>
+    <p class="sub">${s("fbIntro")}</p>
+    <div class="fbcard">
+      <div class="fbq"><span class="qn">1.</span><span>${s("fbQ1")}</span></div>
+      <button class="spk" data-spk="${esc(s("fbQ1"))}">🔊 ${s("listen")}</button>
+      <div class="ynrow">
+        <button class="yn ${r===true?'sel':''}" data-fb="read" data-val="1">👍 ${s("yes")}</button>
+        <button class="yn ${r===false?'sel':''}" data-fb="read" data-val="0">👎 ${s("no")}</button>
+      </div>
+    </div>
+    <div class="fbcard">
+      <div class="fbq"><span class="qn">2.</span><span>${s("fbQ2")}</span></div>
+      <button class="spk" data-spk="${esc(s("fbQ2"))}">🔊 ${s("listen")}</button>
+      <div class="ynrow">
+        <button class="yn ${a===true?'sel':''}" data-fb="audio" data-val="1">👍 ${s("yes")}</button>
+        <button class="yn ${a===false?'sel':''}" data-fb="audio" data-val="0">👎 ${s("no")}</button>
+      </div>
+    </div>
+    <button class="btn" id="fbnext">${s("fbContinue")} →</button>`;
+  el.querySelector("#bk").onclick=()=>{stepI--;renderQ();};
+  el.querySelectorAll(".spk").forEach(b=>b.onclick=()=>speak(b.dataset.spk,b));
+  el.querySelectorAll(".yn").forEach(b=>b.onclick=()=>{
+    answers.fb[b.dataset.fb]=(b.dataset.val==="1");
+    save("sahaay_answers",answers); renderFeedback(el,head);
+  });
+  el.querySelector("#fbnext").onclick=()=>{stepI++;renderQ();};
+}
+
+function renderResults(){
+  const el=document.getElementById("screen-results");
+  if(!answers.age){ // not answered yet
+    el.innerHTML=`<h1>${s("resTitle")}</h1><p class="sub">${s("qIntro")}</p>
+      <button class="btn" id="goq">${s("start")} →</button>`;
+    el.querySelector("#goq").onclick=()=>go("q"); return;
+  }
+  // Record an anonymous usage row once per completed run
+  if(!usageSent){ usageSent=true; postData('usage'); }
+  const list=BENEFITS.filter(eligible);
+  let cards = list.map(b=>{
+    const open=openCards[b.id];
+    const inList=checklist[b.id]!==undefined;
+    const steps=b.steps.map((st,i)=>`<div class="step"><span class="n">${i+1}</span><span>${st[lang]}</span></div>`).join("");
+    const docs=b.docs.map(d=>`<li>${d[lang]}</li>`).join("");
+    const readAll=esc(b.title[lang]+". "+b.desc[lang]);
+    return `<div class="card ${open?'open':''}" data-id="${b.id}">
+      <div class="ch" data-toggle="${b.id}">
+        <div class="ic">${b.icon}</div>
+        <div class="ti"><h2>${b.title[lang]}</h2><span class="tag ${b.money?'money':''}">${b.tag[lang]}</span>
+          <p>${b.desc[lang]}</p>
+          <button class="spk mini" data-spk="${readAll}">🔊 ${s("listen")}</button></div>
+        <div class="arrow">›</div>
+      </div>
+      <div class="body">
+        <h3>${s("stepsT")}</h3>${steps}
+        <h3>${s("docsT")}</h3><ul class="doclist">${docs}</ul>
+        <h3>${s("whoT")}</h3><p style="font-size:14.5px;margin:0 0 4px">${b.who[lang]}</p>
+        <div class="tip">💡 ${b.tip[lang]}</div>
+        <div style="height:12px"></div>
+        <button class="btn ${inList?'secondary':''}" data-add="${b.id}">${inList?s("added"):s("addList")}</button>
+      </div>
+    </div>`;
+  }).join("");
+  el.innerHTML=`
+    <h1>${s("resTitle")}</h1>
+    <div class="resulthead">${s("resSub")}</div>
+    ${list.length?cards:`<div class="card"><div class="ch"><div class="ic">ℹ️</div><div class="ti"><p>${s("none")}</p></div></div></div>`}
+    <div class="cardlite" id="contactCard">
+      <h2>${s("contactTitle")}</h2>
+      <p class="sub" style="margin:0 0 13px">${s("contactSub")}</p>
+      <div id="cform">
+        <input class="inp" id="cname" type="text" placeholder="${esc(s("nameLabel"))}">
+        <input class="inp" id="cphone" type="tel" inputmode="tel" placeholder="${esc(s("phoneLabel"))}">
+        <label class="consent"><input type="checkbox" id="cconsent"><span>${s("consentLabel")}</span></label>
+        <button class="btn" id="csend">${s("contactSubmit")}</button>
+        <div id="cerr" style="color:var(--warn);font-size:13.5px;margin-top:9px;display:none"></div>
+      </div>
+    </div>
+    <div class="disclaimer">${s("glossDCPU")}</div>
+    <div style="height:8px"></div>
+    <button class="btn ghost" id="restart">↺ ${s("restart")}</button>`;
+  el.querySelectorAll("[data-toggle]").forEach(c=>c.onclick=()=>{const id=c.dataset.toggle;openCards[id]=!openCards[id];renderResults();});
+  el.querySelectorAll(".spk").forEach(b=>b.onclick=(e)=>{e.stopPropagation();speak(b.dataset.spk,b);});
+  el.querySelectorAll("[data-add]").forEach(btn=>btn.onclick=(e)=>{e.stopPropagation();
+    const id=btn.dataset.add;
+    if(checklist[id]===undefined){checklist[id]=false;} // add unchecked
+    save("sahaay_checklist",checklist); renderResults();});
+  const send=el.querySelector("#csend");
+  if(send) send.onclick=()=>{
+    const name=el.querySelector("#cname").value.trim();
+    const phone=el.querySelector("#cphone").value.trim();
+    const consent=el.querySelector("#cconsent").checked;
+    const err=el.querySelector("#cerr");
+    if(!consent){err.textContent=s("needConsent");err.style.display="block";return;}
+    if(!phone){err.textContent=s("needPhone");err.style.display="block";return;}
+    postData('contact',{name:name, whatsapp:phone, consent:true});
+    el.querySelector("#cform").innerHTML=`<div class="cmsg">${s("contactThanks")}</div>`;
+  };
+  el.querySelector("#restart").onclick=()=>{
+    answers={age:null,where:null,needs:[],fb:{read:null,audio:null}};
+    save("sahaay_answers",answers);openCards={};usageSent=false;go("q");};
+}
+
+function renderChecklist(){
+  const el=document.getElementById("screen-checklist");
+  const ids=Object.keys(checklist);
+  if(!ids.length){
+    el.innerHTML=`<h1>${s("ckTitle")}</h1><p class="sub">${s("ckSub")}</p>
+      <div class="card"><div class="ch"><div class="ic">📝</div><div class="ti"><p>${s("ckEmpty")}</p></div></div></div>`;
+    return;
+  }
+  const done=ids.filter(i=>checklist[i]).length;
+  let items=ids.map(id=>{
+    const b=BENEFITS.find(x=>x.id===id); if(!b)return"";
+    const d=checklist[id];
+    return `<div class="ckitem ${d?'done':''}" data-ck="${id}">
+      <div class="box"></div>
+      <div class="lbl"><b>${b.icon} ${b.title[lang]}</b><span>${b.who[lang]}</span></div></div>`;
+  }).join("");
+  el.innerHTML=`<h1>${s("ckTitle")}</h1><p class="sub">${s("ckSub")}</p>
+    <p class="ckprog">${done} / ${ids.length} ${s("ckDone")}</p>${items}`;
+  el.querySelectorAll("[data-ck]").forEach(it=>it.onclick=()=>{const id=it.dataset.ck;checklist[id]=!checklist[id];save("sahaay_checklist",checklist);renderChecklist();});
+}
+
+/* ============================ INIT ============================ */
+document.querySelectorAll("#langSwitch button").forEach(b=>b.onclick=()=>setLang(b.dataset.l));
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.go==="home"?"home":b.dataset.go));
+document.querySelectorAll("#langSwitch button").forEach(b=>b.classList.toggle("on",b.dataset.l===lang));
+document.documentElement.lang=lang;
+render();
+</script>
+</body>
+</html>
